@@ -1,0 +1,21 @@
+# Flexy Command Board (Static Dashboard)
+
+A lightweight, mobile-friendly dashboard that runs as a static site (no build tools).
+- Tailwind via CDN
+- Alpine.js for interactivity
+- Data stored in `assets/data.json` (and decisions cached in browser localStorage)
+
+## Quick Start
+Open `index.html` in your browser.
+
+## Edit Data
+Update `assets/data.json`. Refresh the page to see changes.
+
+## Deploy (GitHub Pages)
+1. Create a public repo (e.g., `flexy-command-board`).
+2. Upload all files/folders from this directory.
+3. In **Settings → Pages**, set **Branch: `main`** and **Folder: `/ (root)`**.
+4. Wait 1–2 minutes; your site will be live at `https://<your-username>.github.io/<repo>/`.
+
+## Netlify / Vercel
+Drag-and-drop this folder to Netlify, or create a new project in Vercel selecting this repo. No build command needed.
