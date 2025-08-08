@@ -1,0 +1,145 @@
+
+document.addEventListener('alpine:init', () => {
+  Alpine.store('board', {
+    loading: true,
+    date: '',
+    brief: [],
+    approvals: [],
+    alerts: [],
+    brands: [],
+    approvedCount: 0,
+    rejectedCount: 0,
+    filtered: 'all',
+
+    async init() {
+      try {
+        const res = await fetch('assets/data.json');
+        const data = await res.json();
+        this.date = data.date;
+        this.brief = data.morningBrief;
+        // Restore decisions from localStorage
+        const saved = JSON.parse(localStorage.getItem('approvals-decisions') || '{}');
+        this.approvals = data.approvals.map(a => {
+          if (saved[a.id]) a.status = saved[a.id];
+          return a;
+        });
+        this.computeCounts();
+        this.alerts = data.alerts;
+        this.brands = data.brands;
+      } catch (e) {
+        console.error(e);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    decide(id, status) {
+      const idx = this.approvals.findIndex(a => a.id === id);
+      if (idx === -1) return;
+      this.approvals[idx].status = status;
+      // persist
+      const map = {};
+      this.approvals.forEach(a => map[a.id] = a.status);
+      localStorage.setItem('approvals-decisions', JSON.stringify(map));
+      this.computeCounts();
+    },
+
+    clearDecisions() {
+      localStorage.removeItem('approvals-decisions');
+      this.approvals = this.approvals.map(a => ({...a, status: 'pending'}));
+      this.computeCounts();
+    },
+
+    computeCounts() {
+      this.approvedCount = this.approvals.filter(a => a.status === 'approved').length;
+      this.rejectedCount = this.approvals.filter(a => a.status === 'rejected').length;
+    },
+
+    badgeClass(status) {
+      switch (status.toLowerCase()) {
+        case 'ok': return 'badge badge-ok';
+        case 'review': return 'badge badge-review';
+        case 'expiring': return 'badge badge-expiring';
+        case 'late': return 'badge badge-late';
+        default: return 'badge';
+      }
+    }
+  })
+})
+
+{
+  "date": "Fri, 08 Aug 2025",
+  "morningBrief": [
+    "Yesterday: 3 Wahala Wear orders shipped; 1 supplier quote received; NDIS pricing update added to vault.",
+    "Kelly Smith\u2019s First Aid expires in 14 days.",
+    "Afro-Konnect milestone 3 at 62% complete."
+  ],
+  "approvals": [
+    {
+      "id": "ap1",
+      "title": "Wahala Wear Supplier Quote",
+      "detail": "Restock 50 jackets \u2014 $2,450",
+      "status": "pending"
+    },
+    {
+      "id": "ap2",
+      "title": "Influencer Collab \u2014 Lex\u2019Show",
+      "detail": "@trendtalks_au \u2014 2 reels + shoutout",
+      "status": "pending"
+    },
+    {
+      "id": "ap3",
+      "title": "Afro-Konnect Dev Invoice",
+      "detail": "Milestone 3 \u2014 $1,200",
+      "status": "pending"
+    }
+  ],
+  "alerts": [
+    {
+      "item": "First Aid \u2014 Kelly Smith",
+      "due": "22 Aug",
+      "status": "Expiring"
+    },
+    {
+      "item": "Incident \u2014 Lara Gair",
+      "due": "Today",
+      "status": "Review"
+    },
+    {
+      "item": "Supplier delivery \u2014 Wahala Wear",
+      "due": "Overdue",
+      "status": "Late"
+    },
+    {
+      "item": "NDIS Pricing \u2014 Update",
+      "due": "Done",
+      "status": "OK"
+    }
+  ],
+  "brands": [
+    {
+      "name": "NDIS Hub",
+      "notes": "Compliance 92% \u2022 Pricing updated \u2022 1 incident pending",
+      "link": "#"
+    },
+    {
+      "name": "Wahala Wear",
+      "notes": "23 items in stock \u2022 Next restock in 14 days",
+      "link": "#"
+    },
+    {
+      "name": "Stingy Coffee",
+      "notes": "Sales +12% this week \u2022 Campaign draft ready",
+      "link": "#"
+    }
+  ]
+}
+
+/* Custom tweaks */
+.badge { @apply px-2 py-0.5 rounded-full text-xs font-semibold; }
+.badge-ok { @apply bg-emerald-100 text-emerald-700; }
+.badge-review { @apply bg-amber-100 text-amber-700; }
+.badge-expiring { @apply bg-orange-100 text-orange-700; }
+.badge-late { @apply bg-rose-100 text-rose-700; }
+.card { @apply bg-white rounded-2xl shadow-md p-5; }
+.kpi { @apply text-3xl font-bold; }
